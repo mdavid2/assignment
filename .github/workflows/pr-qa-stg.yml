@@ -1,0 +1,68 @@
+name: QA & STG Deployment
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - synchronize
+
+jobs:
+  qa-health-check:
+    name: QA Health Check
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+
+    - run: npm install
+
+    - name: Start QA server
+      run: |
+        node server.js &
+        sleep 3
+
+    - name: Run QA health check
+      run: |
+        chmod +x test.sh
+        ./test.sh
+
+    - name: Stop QA server
+      run: pkill -f "node server.js" || true
+
+  stg-deploy:
+    name: Deploy to STG
+    runs-on: ubuntu-latest
+    needs: qa-health-check
+    if: ${{ needs.qa-health-check.result == 'success' }}
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+
+    - run: npm install
+
+    - name: Start STG server
+      run: |
+        node server.js &
+        sleep 3
+
+    - name: Run STG health check
+      run: |
+        chmod +x test.sh
+        ./test.sh
+
+    - name: Stop STG server
+      run: pkill -f "node server.js" || true
+
+    - name: Rollback STG if health check failed
+      if: ${{ failure() }}
+      run: echo "Rolling back STG deployment..."
