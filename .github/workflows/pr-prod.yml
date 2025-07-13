@@ -8,33 +8,98 @@ on:
       - main
 
 jobs:
-  prod-deploy:
-    name: Deploy to PROD
-    if: ${{ github.event.pull_request.merged == true }}
+  build-prod:
+    name: Build PROD
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v4
-
+    
     - uses: actions/setup-node@v4
       with:
         node-version: '20.x'
-
+    
     - run: npm install
 
+  deploy-prod:
+    name: Deploy PROD
+    runs-on: ubuntu-latest
+    needs: build-prod
+    if: ${{ needs.build-prod.result == 'success' }}
+
+    steps:
+    - name: Deploy PROD
+      run: echo "Deploying to PROD environment..."
+
+  test-prod:
+    name: Test PROD
+    runs-on: ubuntu-latest
+    needs: deploy-prod
+    if: ${{ needs.deploy-prod.result == 'success' }}
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+    
+    - run: npm install
+    
     - name: Start PROD server
       run: |
         node server.js &
         sleep 3
-
+    
     - name: Run PROD health check
       run: |
         chmod +x test.sh
         ./test.sh
-
+    
     - name: Stop PROD server
       run: pkill -f "node server.js" || true
 
-    - name: Rollback PROD if health check failed
-      if: ${{ failure() }}
-      run: echo "Rolling back PROD deployment..."
+  rollback-prod:
+    name: Rollback PROD
+    runs-on: ubuntu-latest
+    needs: test-prod
+    if: ${{ needs.test-prod.result == 'failure' }}
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+  
+    - name: Checkout stable prod commit
+      run: |
+        git fetch --tags
+        echo "Rolling back to prod-stable"
+        git checkout prod-stable
+        # deploy to PROD
+
+  tag-prod:
+    name: Tag PROD Release
+    runs-on: ubuntu-latest
+    needs: test-prod
+    if: ${{ needs.test-prod.result == 'success' }}
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Tag successful PROD release
+      run: |
+        SHORT_SHA=$(git rev-parse --short HEAD)
+        DATE=$(date +'%d%m%Y')
+        VERSION_TAG="prod-${DATE}-${SHORT_SHA}"
+  
+        echo "Creating version tag: $VERSION_TAG"
+        git config --global user.email "ci-bot@github.com"
+        git config --global user.name "CI Bot"
+        git tag $VERSION_TAG
+  
+        echo "Updating floating tag: prod-stable"
+        git tag -f prod-stable
+  
+        git push origin $VERSION_TAG
+        git push origin -f prod-stable
