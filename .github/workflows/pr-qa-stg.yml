@@ -87,7 +87,7 @@ jobs:
     
     - name: Tag successful QA commit
       run: |
-        TAG="qa-$(date +'%Y%m%d')-${{ github.sha }}"
+        TAG="qa-$(date +'%d%m%Y')-${{ github.sha }}"
         echo "Tagging release as $TAG"
         git config --global user.email "ci-bot@github.com"
         git config --global user.name "CI Bot"
@@ -174,7 +174,7 @@ jobs:
         fetch-depth: 0
     - name: Tag successful STG commit
       run: |
-        TAG="stg-$(date +'%Y%m%d')-${{ github.sha }}"
+        TAG="stg-$(date +'%d%m%Y')-${{ github.sha }}"
         echo "Tagging release as $TAG"
         git config --global user.email "ci-bot@github.com"
         git config --global user.name "CI Bot"
