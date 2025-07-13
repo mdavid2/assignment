@@ -6,6 +6,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    env:
+      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
     steps:
     - uses: actions/checkout@v4
 
@@ -13,6 +16,9 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: '20.x'
+
+    - name: Configure npm authentication
+      run: echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
 
     - name: Install dependencies
       run: npm install
