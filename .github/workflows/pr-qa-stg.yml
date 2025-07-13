@@ -25,17 +25,18 @@ jobs:
   deploy-qa:
     name: Deploy QA
     runs-on: ubuntu-latest
-    needs: test-qa
-    if: ${{ needs.test-qa.result == 'success' }}
+    needs: build-qa
+    if: ${{ needs.build-qa.result == 'success' }}
 
     steps:
     - name: Deploy QA
-      run: echo "✅ QA passed! Deploying to QA environment..."
+      run: echo "Deploying to QA environment..."
 
   test-qa:
     name: Test QA
     runs-on: ubuntu-latest
-    needs: build-qa
+    needs: deploy-qa
+    if: ${{ needs.deploy-qa.result == 'success' }}
 
     steps:
     - uses: actions/checkout@v4
@@ -59,10 +60,20 @@ jobs:
     - name: Stop QA server
       run: pkill -f "node server.js" || true
 
+  rollback-qa:
+    name: Rollback QA
+    runs-on: ubuntu-latest
+    needs: test-qa
+    if: ${{ needs.test-qa.result == 'failure' }}
+
+    steps:
+    - run: echo "Rolling back QA deployment..."
+
   build-stg:
     name: Build STG
     runs-on: ubuntu-latest
-    needs: deploy-qa
+    needs: test-qa
+    if: ${{ needs.test-qa.result == 'success' }}
 
     steps:
     - uses: actions/checkout@v4
@@ -73,10 +84,21 @@ jobs:
     
     - run: npm install
 
+  deploy-stg:
+    name: Deploy STG
+    runs-on: ubuntu-latest
+    needs: build-stg
+    if: ${{ needs.build-stg.result == 'success' }}
+
+    steps:
+    - name: Deploy STG
+      run: echo "✅ STG passed! Deploying to STG environment..."
+      
   test-stg:
     name: Test STG
     runs-on: ubuntu-latest
-    needs: build-stg
+    needs: deploy-stg
+    if: ${{ needs.deploy-stg.result == 'success' }}
 
     steps:
     - uses: actions/checkout@v4
@@ -99,13 +121,12 @@ jobs:
     
     - name: Stop STG server
       run: pkill -f "node server.js" || true
-
-  deploy-stg:
-    name: Deploy STG
+  
+  rollback-stg:
+    name: Rollback STG
     runs-on: ubuntu-latest
     needs: test-stg
-    if: ${{ needs.test-stg.result == 'success' }}
+    if: ${{ needs.test-stg.result == 'failure' }}
 
     steps:
-    - name: Deploy STG
-      run: echo "✅ STG passed! Deploying to STG environment..."
+    - run: echo "Rolling back STG deployment..."
