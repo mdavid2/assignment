@@ -85,14 +85,22 @@ jobs:
       with:
         fetch-depth: 0
     
-    - name: Tag successful QA commit
+    - name: Tag successful QA release
       run: |
-        TAG="qa-$(date +'%d%m%Y')-${{ github.sha }}"
-        echo "Tagging release as $TAG"
+        SHORT_SHA=$(git rev-parse --short HEAD)
+        DATE=$(date +'%d%m%Y')
+        VERSION_TAG="qa-${DATE}-${SHORT_SHA}"
+  
+        echo "Creating version tag: $VERSION_TAG"
         git config --global user.email "ci-bot@github.com"
         git config --global user.name "CI Bot"
-        git tag $TAG
-        git push origin $TAG
+        git tag $VERSION_TAG
+  
+        echo "Updating floating tag: qa-stable"
+        git tag -f qa-stable
+  
+        git push origin $VERSION_TAG
+        git push origin -f qa-stable
   
   build-stg:
     name: Build STG
@@ -172,11 +180,20 @@ jobs:
     - uses: actions/checkout@v4
       with:
         fetch-depth: 0
-    - name: Tag successful STG commit
+    
+    - name: Tag successful STG release
       run: |
-        TAG="stg-$(date +'%d%m%Y')-${{ github.sha }}"
-        echo "Tagging release as $TAG"
+        SHORT_SHA=$(git rev-parse --short HEAD)
+        DATE=$(date +'%d%m%Y')
+        VERSION_TAG="stg-${DATE}-${SHORT_SHA}"
+  
+        echo "Creating version tag: $VERSION_TAG"
         git config --global user.email "ci-bot@github.com"
         git config --global user.name "CI Bot"
-        git tag $TAG
-        git push origin $TAG
+        git tag $VERSION_TAG
+  
+        echo "Updating floating tag: stg-stable"
+        git tag -f stg-stable
+  
+        git push origin $VERSION_TAG
+        git push origin -f stg-stable
