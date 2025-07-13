@@ -1,0 +1,40 @@
+name: PROD Deployment
+
+on:
+  pull_request:
+    types:
+      - closed
+    branches:
+      - main
+
+jobs:
+  prod-deploy:
+    name: Deploy to PROD
+    if: ${{ github.event.pull_request.merged == true }}
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+
+    - run: npm install
+
+    - name: Start PROD server
+      run: |
+        node server.js &
+        sleep 3
+
+    - name: Run PROD health check
+      run: |
+        chmod +x test.sh
+        ./test.sh
+
+    - name: Stop PROD server
+      run: pkill -f "node server.js" || true
+
+    - name: Rollback PROD if health check failed
+      if: ${{ failure() }}
+      run: echo "Rolling back PROD deployment..."
