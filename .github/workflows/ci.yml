@@ -12,13 +12,13 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Set up Node.js
+    - name: Set up Node.js with npm auth
       uses: actions/setup-node@v4
       with:
         node-version: '20.x'
-
-    - name: Configure npm authentication
-      run: echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
+        registry-url: 'https://registry.npmjs.org/'
+        always-auth: true
+        token: ${{ secrets.NPM_TOKEN }}
 
     - name: Install dependencies
       run: npm install
