@@ -8,9 +8,12 @@ jobs:
     runs-on: ubuntu-latest
 
     outputs:
-      build-success: ${{ steps.build-step.outcome }}
+      app_version: ${{ steps.version_step.outputs.version }}
 
     steps:
+    - id: version_step
+      run: echo "version=1.2.3" >> $GITHUB_OUTPUT
+      
     - name: Checkout repository
       uses: actions/checkout@v4
 
@@ -29,6 +32,9 @@ jobs:
     needs: build
 
     steps:
+    - name: Print version
+      run: echo "Deploying version ${{ needs.build.outputs.app_version }}"
+      
     - name: Checkout repository
       uses: actions/checkout@v4
 
