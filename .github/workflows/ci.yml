@@ -14,11 +14,19 @@ jobs:
       with:
         node-version: '20.x'
 
-    - name: Clear any global npmrc
-      run: rm -f ~/.npmrc
-
     - name: Install dependencies
       run: npm install
 
-    - name: Run the app
-      run: node server.js
+    - name: Start server in background
+      run: |
+        node server.js &
+        sleep 3  # Give the server time to start
+
+    - name: Run health check test
+      run: |
+        chmod +x test.sh
+        ./test.sh
+
+    - name: Stop server
+      run: |
+        pkill -f "node server.js" || true
