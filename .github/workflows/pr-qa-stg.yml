@@ -67,12 +67,15 @@ jobs:
     if: ${{ needs.test-qa.result == 'failure' }}
 
     steps:
-    - run: echo "Rolling back QA..."
-    - run: |
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+  
+    - name: Checkout stable qa commit
+      run: |
         git fetch --tags
-        LAST_TAG=$(git tag --sort=-creatordate | grep '^qa-' | head -n 1)
-        echo "Checking out $LAST_TAG"
-        git checkout $LAST_TAG
+        echo "Rolling back to qa-stable"
+        git checkout qa-stable
         # deploy to QA
 
   tag-qa:
@@ -162,12 +165,15 @@ jobs:
     if: ${{ needs.test-stg.result == 'failure' }}
 
     steps:
-    - run: echo "Rolling back STG..."
-    - run: |
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+  
+    - name: Checkout stable stg commit
+      run: |
         git fetch --tags
-        LAST_TAG=$(git tag --sort=-creatordate | grep '^stg-' | head -n 1)
-        echo "Checking out $LAST_TAG"
-        git checkout $LAST_TAG
+        echo "Rolling back to stg-stable"
+        git checkout stg-stable
         # deploy to STG
 
   tag-stg:
