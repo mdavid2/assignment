@@ -21,6 +21,7 @@ jobs:
     - name: Create release branch from stg-stable
       run: |
         git fetch origin tag stg-stable
+        SHORT_SHA=$(git rev-parse --short HEAD)
         RELEASE_BRANCH="release/$(date +'%d%m%Y')-${SHORT_SHA}"
         git checkout -b $RELEASE_BRANCH stg-stable
         git push origin $RELEASE_BRANCH
