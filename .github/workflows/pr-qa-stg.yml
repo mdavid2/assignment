@@ -63,7 +63,8 @@ jobs:
   test-functional-qa:
     name: Functional Tests QA
     runs-on: ubuntu-latest
-    needs: deploy-qa
+    needs: test-sanity-qa
+    if: ${{ needs.test-sanity-qa.result == 'success' }}
 
     steps:
     - uses: actions/checkout@v4
