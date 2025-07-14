@@ -29,6 +29,10 @@ jobs:
     if: ${{ needs.build-qa.result == 'success' }}
 
     steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0 
+      
     - name: Pre-tag commit before deployment
       run: |
         SHORT_SHA=$(git rev-parse --short HEAD)
@@ -155,6 +159,10 @@ jobs:
     if: ${{ needs.build-stg.result == 'success' }}
 
     steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0 
+        
     - name: Pre-tag STG release before deployment
       run: |
         SHORT_SHA=$(git rev-parse --short HEAD)
