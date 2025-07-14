@@ -53,8 +53,8 @@ jobs:
     
     - name: Run PROD health check
       run: |
-        chmod +x __tests__/test.sh
-        __tests__/test.sh
+        chmod +x __tests__/sanity.sh
+        __tests__/sanity.sh
     
     - name: Stop PROD server
       run: pkill -f "node server.js" || true
