@@ -1,4 +1,4 @@
-name: Unit Tests
+name: Unit Tests & Static Analysis
 
 on:
   push:
@@ -6,17 +6,60 @@ on:
       - 'feature/**'
       - 'bugfix/**'
 
-jobs:
-  test-unit:
-    runs-on: ubuntu-latest
+permissions:
+  contents: read
 
+jobs:
+  eslint:
+    name: ESLint
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-
     - uses: actions/setup-node@v4
       with:
         node-version: '20.x'
+    - name: Install ESLint
+      run: |
+        npm install --save-dev eslint
+        npx eslint .
 
-    - run: npm install
+  prettier:
+    name: Prettier
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+    - name: Install Prettier
+      run: |
+        npm install --save-dev prettier
+        npx prettier --check .
 
-    - run: npm test
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+    - name: Install and Test
+      run: |
+        npm install
+        npm test
+
+  snyk-security:
+    name: Snyk Security Scan
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+    - name: Install Dependencies
+      run: npm install
+    - name: Run Snyk
+      uses: snyk/actions/node@v1
+      env:
+        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
