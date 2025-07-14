@@ -3,7 +3,7 @@ name: Release to Production
 on:
   push:
     tags:
-      - stg-stable
+      - stg-*
 
 permissions:
   contents: write
