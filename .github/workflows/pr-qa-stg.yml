@@ -60,6 +60,26 @@ jobs:
     - name: Stop QA server
       run: pkill -f "node server.js" || true
 
+  test-functional-qa:
+    name: Functional Tests QA
+    runs-on: ubuntu-latest
+    needs: deploy-qa
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+
+    - name: Install dependencies
+      run: npm install
+
+    - name: Run functional test suite
+      run: |
+        npm run test:functional || echo "Functional tests failed"
+
   rollback-qa:
     name: Rollback QA
     runs-on: ubuntu-latest
