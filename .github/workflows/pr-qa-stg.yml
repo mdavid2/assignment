@@ -32,8 +32,8 @@ jobs:
     - name: Deploy QA
       run: echo "Deploying to QA environment..."
 
-  test-qa:
-    name: Test QA
+  test-sanity-qa:
+    name: Test QA sanity
     runs-on: ubuntu-latest
     needs: deploy-qa
     if: ${{ needs.deploy-qa.result == 'success' }}
@@ -54,8 +54,8 @@ jobs:
     
     - name: Run QA health check
       run: |
-        chmod +x test.sh
-        ./test.sh
+        chmod +x __test__/test.sh
+        __test__/test.sh
     
     - name: Stop QA server
       run: pkill -f "node server.js" || true
@@ -63,8 +63,8 @@ jobs:
   rollback-qa:
     name: Rollback QA
     runs-on: ubuntu-latest
-    needs: test-qa
-    if: ${{ needs.test-qa.result == 'failure' }}
+    needs: test-sanity-qa
+    if: ${{ needs.test-sanity-qa.result == 'failure' }}
 
     steps:
     - uses: actions/checkout@v4
@@ -81,8 +81,8 @@ jobs:
   tag-qa:
     name: Tag QA Release
     runs-on: ubuntu-latest
-    needs: test-qa
-    if: ${{ needs.test-qa.result == 'success' }}
+    needs: test-sanity-qa
+    if: ${{ needs.test-sanity-qa.result == 'success' }}
     steps:
     - uses: actions/checkout@v4
       with:
@@ -108,8 +108,8 @@ jobs:
   build-stg:
     name: Build STG
     runs-on: ubuntu-latest
-    needs: test-qa
-    if: ${{ needs.test-qa.result == 'success' }}
+    needs: test-sanity-qa
+    if: ${{ needs.test-sanity-qa.result == 'success' }}
 
     steps:
     - uses: actions/checkout@v4
@@ -130,7 +130,7 @@ jobs:
     - name: Deploy STG
       run: echo "Deploying to STG environment..."
       
-  test-stg:
+  test-sanity-stg:
     name: Test STG
     runs-on: ubuntu-latest
     needs: deploy-stg
@@ -152,8 +152,8 @@ jobs:
     
     - name: Run STG health check
       run: |
-        chmod +x test.sh
-        ./test.sh
+        chmod +x __test__/test.sh
+        __test__/test.sh
     
     - name: Stop STG server
       run: pkill -f "node server.js" || true
@@ -161,8 +161,8 @@ jobs:
   rollback-stg:
     name: Rollback STG
     runs-on: ubuntu-latest
-    needs: test-stg
-    if: ${{ needs.test-stg.result == 'failure' }}
+    needs: test-sanity-stg
+    if: ${{ needs.test-sanity-stg.result == 'failure' }}
 
     steps:
     - uses: actions/checkout@v4
@@ -179,8 +179,8 @@ jobs:
   tag-stg:
     name: Tag STG Release
     runs-on: ubuntu-latest
-    needs: test-stg
-    if: ${{ needs.test-stg.result == 'success' }}
+    needs: test-sanity-stg
+    if: ${{ needs.test-sanity-stg.result == 'success' }}
     environment: STG
     steps:
     - uses: actions/checkout@v4
