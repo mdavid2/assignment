@@ -29,6 +29,10 @@ jobs:
     if: ${{ needs.build-qa.result == 'success' }}
 
     steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0 
+      
     - name: Pre-tag commit before deployment
       run: |
         SHORT_SHA=$(git rev-parse --short HEAD)
@@ -155,6 +159,10 @@ jobs:
     if: ${{ needs.build-stg.result == 'success' }}
 
     steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0 
+        
     - name: Pre-tag STG release before deployment
       run: |
         SHORT_SHA=$(git rev-parse --short HEAD)
@@ -228,13 +236,16 @@ jobs:
         fetch-depth: 0
 
     - name: Move floating tag to latest verified STG release
+      env:
+        GIT_PAT: ${{ secrets.PAT_PUSH_TAG }} 
       run: |
         SHORT_SHA=$(git rev-parse --short HEAD)
         DATE=$(date +'%d%m%Y')
         VERSION_TAG="stg-${DATE}-${SHORT_SHA}"
-  
+
         echo "Moving stg-stable → $VERSION_TAG"
         git config --global user.email "ci-bot@github.com"
         git config --global user.name "CI Bot"
+        git remote set-url origin https://x-access-token:${GIT_PAT}@github.com/${{ github.repository }}
         git tag -f stg-stable $VERSION_TAG
         git push origin -f stg-stable
