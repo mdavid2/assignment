@@ -29,8 +29,20 @@ jobs:
     if: ${{ needs.build-qa.result == 'success' }}
 
     steps:
+    - name: Pre-tag commit before deployment
+      run: |
+        SHORT_SHA=$(git rev-parse --short HEAD)
+        DATE=$(date +'%d%m%Y')
+        VERSION_TAG="qa-${DATE}-${SHORT_SHA}"
+    
+        echo "Tagging release as $VERSION_TAG"
+        git config --global user.email "ci-bot@github.com"
+        git config --global user.name "CI Bot"
+        git tag $VERSION_TAG
+        git push origin $VERSION_TAG
+    
     - name: Deploy QA
-      run: echo "Deploying to QA environment..."
+      run: echo "Deploying to QA environment..." # here will come deployment script such as pushing to remote repository (like nexus/ECR) etc.
 
   test-sanity-qa:
     name: Test QA sanity
@@ -100,7 +112,7 @@ jobs:
         # deploy to QA
 
   tag-qa:
-    name: Tag QA Release
+    name: Update QA Stable Tag
     runs-on: ubuntu-latest
     needs: test-sanity-qa
     if: ${{ needs.test-sanity-qa.result == 'success' }}
@@ -109,21 +121,16 @@ jobs:
       with:
         fetch-depth: 0
     
-    - name: Tag successful QA release
+    - name: Move floating stable tag
       run: |
         SHORT_SHA=$(git rev-parse --short HEAD)
         DATE=$(date +'%d%m%Y')
         VERSION_TAG="qa-${DATE}-${SHORT_SHA}"
   
-        echo "Creating version tag: $VERSION_TAG"
+        echo "Moving qa-stable to $VERSION_TAG"
         git config --global user.email "ci-bot@github.com"
         git config --global user.name "CI Bot"
-        git tag $VERSION_TAG
-  
-        echo "Updating floating tag: qa-stable"
-        git tag -f qa-stable
-  
-        git push origin $VERSION_TAG
+        git tag -f qa-stable $VERSION_TAG
         git push origin -f qa-stable
   
   build-stg:
