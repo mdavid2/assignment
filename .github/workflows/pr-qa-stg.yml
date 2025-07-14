@@ -250,7 +250,5 @@ jobs:
         git config --global user.name "CI Bot"
         git remote set-url origin https://x-access-token:${GIT_PAT}@github.com/${{ github.repository }}
 
-        git tag -d stg-stable
-        git push origin :refs/tags/stg-stable
         git tag stg-stable "$VERSION_TAG"
         git push origin stg-stable
