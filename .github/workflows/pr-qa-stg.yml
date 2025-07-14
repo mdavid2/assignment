@@ -54,8 +54,8 @@ jobs:
     
     - name: Run QA health check
       run: |
-        chmod +x __test__/test.sh
-        __test__/test.sh
+        chmod +x __tests__/sanity.sh
+        __tests__/sanity.sh
     
     - name: Stop QA server
       run: pkill -f "node server.js" || true
@@ -152,8 +152,8 @@ jobs:
     
     - name: Run STG health check
       run: |
-        chmod +x __test__/test.sh
-        __test__/test.sh
+        chmod +x __tests__/sanity.sh
+        __tests__/sanity.sh
     
     - name: Stop STG server
       run: pkill -f "node server.js" || true
