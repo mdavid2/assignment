@@ -155,8 +155,20 @@ jobs:
     if: ${{ needs.build-stg.result == 'success' }}
 
     steps:
+    - name: Pre-tag STG release before deployment
+      run: |
+        SHORT_SHA=$(git rev-parse --short HEAD)
+        DATE=$(date +'%d%m%Y')
+        VERSION_TAG="stg-${DATE}-${SHORT_SHA}"
+    
+        echo "Tagging STG release as $VERSION_TAG"
+        git config --global user.email "ci-bot@github.com"
+        git config --global user.name "CI Bot"
+        git tag $VERSION_TAG
+        git push origin $VERSION_TAG
+    
     - name: Deploy STG
-      run: echo "Deploying to STG environment..."
+      run: echo "Deploying to STG environment..." # here will come deployment script such as pushing to remote repository (like nexus/ECR) etc.
       
   test-sanity-stg:
     name: Test STG
@@ -205,29 +217,24 @@ jobs:
         # deploy to STG
 
   tag-stg:
-    name: Tag STG Release
+    name: Update STG Stable Tag
     runs-on: ubuntu-latest
     needs: test-sanity-stg
     if: ${{ needs.test-sanity-stg.result == 'success' }}
-    environment: STG
+    
     steps:
     - uses: actions/checkout@v4
       with:
         fetch-depth: 0
-    
-    - name: Tag successful STG release
+
+    - name: Move floating tag to latest verified STG release
       run: |
         SHORT_SHA=$(git rev-parse --short HEAD)
         DATE=$(date +'%d%m%Y')
         VERSION_TAG="stg-${DATE}-${SHORT_SHA}"
   
-        echo "Creating version tag: $VERSION_TAG"
+        echo "Moving stg-stable → $VERSION_TAG"
         git config --global user.email "ci-bot@github.com"
         git config --global user.name "CI Bot"
-        git tag $VERSION_TAG
-  
-        echo "Updating floating tag: stg-stable"
-        git tag -f stg-stable
-  
-        git push origin $VERSION_TAG
+        git tag -f stg-stable $VERSION_TAG
         git push origin -f stg-stable
