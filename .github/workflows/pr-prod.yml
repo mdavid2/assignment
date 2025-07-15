@@ -36,7 +36,7 @@ jobs:
       run: |
         SHORT_SHA=$(git rev-parse --short HEAD)
         DATE=$(date +'%d%m%Y')
-        VERSION_TAG="qa-${DATE}-${SHORT_SHA}"
+        VERSION_TAG="prod-${DATE}-${SHORT_SHA}"
     
         echo "Tagging release as $VERSION_TAG"
         git config --global user.email "ci-bot@github.com"
