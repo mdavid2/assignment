@@ -97,11 +97,26 @@ jobs:
       run: |
         npm run test:functional || echo "Functional tests failed"
 
+  test-integration-qa:
+    name: Run QA integration Tests 
+    runs-on: ubuntu-latest
+    needs: test-sanity-qa
+    if: ${{ needs.test-sanity-qa.result == 'success' }}
+    
+    steps:
+    - name: Run integration tests
+      run: |
+        echo "here will come the integration tests"
+        sleep 1
+        echo "QA integration tests completed"
+
   rollback-qa:
     name: Rollback QA
     runs-on: ubuntu-latest
-    needs: test-functional-qa
-    if: ${{ needs.test-functional-qa.result == 'failure' }}
+    needs: 
+      - test-functional-qa
+      - test-integration-qa
+    if: ${{ needs.test-functional-qa.result == 'failure'  || needs.test-integration-qa.result == 'failure'}}
 
     steps:
     - uses: actions/checkout@v4
@@ -118,8 +133,10 @@ jobs:
   tag-qa:
     name: Update QA Stable Tag
     runs-on: ubuntu-latest
-    needs: test-functional-qa
-    if: ${{ needs.test-functional-qa.result == 'success' }}
+    needs: 
+      - test-functional-qa
+      - test-integration-qa
+    if: ${{ needs.test-functional-qa.result == 'success'  && needs.test-integration-qa.result == 'success'}}
     steps:
     - uses: actions/checkout@v4
       with:
