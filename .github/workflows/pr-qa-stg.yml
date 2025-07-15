@@ -269,8 +269,7 @@ jobs:
       - test-e2e-stg
       - test-regression-stg
       - test-performance-stg
-    if: |
-      ${{ needs.test-e2e-stg.result == 'failure' || needs.test-regression-stg.result == 'failure' || needs.test-performance-stg.result == 'failure' }}
+    if: ${{ needs.test-e2e-stg.result == 'failure' || needs.test-regression-stg.result == 'failure' || needs.test-performance-stg.result == 'failure' }}
 
     steps:
     - uses: actions/checkout@v4
