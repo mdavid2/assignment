@@ -307,9 +307,15 @@ jobs:
         SHORT_SHA=$(git rev-parse --short HEAD)
         DATE=$(date +'%d%m%Y')
         VERSION_TAG="stg-${DATE}-${SHORT_SHA}"
+  
+        echo "Moving stg-stable → $VERSION_TAG"
+        git config --global user.email "ci-bot@github.com"
+        git config --global user.name "CI Bot"
+        git tag -f stg-stable $VERSION_TAG
+        git push origin -f stg-stable
 
   slack-alert:
-    name: Alert to Slack on Failure
+    name: Notify Slack on Failure
     runs-on: ubuntu-latest
     needs:
       - build-qa
@@ -327,58 +333,40 @@ jobs:
       - test-performance-stg
       - rollback-stg
       - tag-stg
-    if: always()
+    if: |
+      ${{ needs.build-stg.result == 'failure' ||
+          needs.deploy-stg.result == 'failure' ||
+          needs.test-sanity-stg.result == 'failure' ||
+          needs.test-e2e-stg.result == 'failure' ||
+          needs.test-regression-stg.result == 'failure' ||
+          needs.test-performance-stg.result == 'failure' ||
+          needs.rollback-stg.result == 'failure' ||
+          needs.tag-stg.result == 'failure' }}
 
     steps:
-    - name: Detect failed jobs
-      id: detect
-      run: |
-        FAILED=""
-        for job in build-stg deploy-stg test-sanity-stg test-e2e-stg test-regression-stg test-performance-stg rollback-stg tag-stg; do
-          result="${{ needs.${job}.result }}"
-          if [ "$result" = "failure" ]; then
-            FAILED="$FAILED\n• $job"
-          fi
-        done
-  
-        # If any failed, output status=failure and the list
-        if [ -n "$FAILED" ]; then
-          echo "status=failure" >> $GITHUB_OUTPUT
-          echo "failed_jobs=$FAILED" >> $GITHUB_OUTPUT
-        else
-          echo "status=success" >> $GITHUB_OUTPUT
-        fi
-  
-    - name: Notify Slack - Only on Failure
-      if: ${{ steps.detect.outputs.status == 'failure' }}
-      uses: slackapi/slack-github-action@v2.1.0
-      with:
-        payload: |
-          {
-            "text": "* PR QA/STG Pipeline Failed!*",
-            "attachments": [
-              {
-                "color": "danger",
-                "fields": [
-                  {
-                    "title": "Failed Jobs",
-                    "value": "${{ steps.detect.outputs.failed_jobs }}"
-                  },
-                  {
-                    "title": "Link to Run",
-                    "value": "<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Click here>"
-                  }
-                ],
-                "footer": "GitHub Actions • STG Workflow",
-                "ts": $(date +%s)
-              }
-            ]
-          }
-      env:
-        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-  
-          echo "Moving stg-stable → $VERSION_TAG"
-          git config --global user.email "ci-bot@github.com"
-          git config --global user.name "CI Bot"
-          git tag -f stg-stable $VERSION_TAG
-          git push origin -f stg-stable
+      - name: Send Slack Message
+        uses: slackapi/slack-github-action@v2.1.0
+        with:
+          payload: |
+            {
+              "text": "*PR QA/STG Pipeline Failed!*",
+              "attachments": [
+                {
+                  "color": "danger",
+                  "fields": [
+                    {
+                      "title": "Status",
+                      "value": "Failure"
+                    },
+                    {
+                      "title": "Workflow Run",
+                      "value": "<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View on GitHub>"
+                    }
+                  ],
+                  "footer": "${{ github.repository }} • STG Workflow",
+                  "ts": $(date +%s)
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
