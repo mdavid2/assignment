@@ -100,8 +100,8 @@ jobs:
   rollback-qa:
     name: Rollback QA
     runs-on: ubuntu-latest
-    needs: test-sanity-qa
-    if: ${{ needs.test-sanity-qa.result == 'failure' }}
+    needs: test-functional-qa
+    if: ${{ needs.test-functional-qa.result == 'failure' }}
 
     steps:
     - uses: actions/checkout@v4
@@ -113,13 +113,13 @@ jobs:
         git fetch --tags
         echo "Rolling back to qa-stable"
         git checkout qa-stable
-        # deploy to QA
+        # deploy latest stable back to QA
 
   tag-qa:
     name: Update QA Stable Tag
     runs-on: ubuntu-latest
-    needs: test-sanity-qa
-    if: ${{ needs.test-sanity-qa.result == 'success' }}
+    needs: test-functional-qa
+    if: ${{ needs.test-functional-qa.result == 'success' }}
     steps:
     - uses: actions/checkout@v4
       with:
@@ -140,8 +140,8 @@ jobs:
   build-stg:
     name: Build STG
     runs-on: ubuntu-latest
-    needs: test-sanity-qa
-    if: ${{ needs.test-sanity-qa.result == 'success' }}
+    needs: test-functional-qa
+    if: ${{ needs.test-functional-qa.result == 'success' }}
 
     steps:
     - uses: actions/checkout@v4
@@ -205,12 +205,55 @@ jobs:
     
     - name: Stop STG server
       run: pkill -f "node server.js" || true
+
+  test-e2e-stg:
+    name: Run STG E2E Tests
+    runs-on: ubuntu-latest
+    needs: test-sanity-stg
+    if: ${{ needs.test-sanity-stg.result == 'success' }}
+  
+    steps:
+    - name: Run E2E tests
+      run: |
+        echo "here will come the E2E tests"
+        sleep 1
+        echo "STG E2E tests completed"
+
+  test-regression-stg:
+    name: Run STG regression Tests
+    runs-on: ubuntu-latest
+    needs: test-sanity-stg
+    if: ${{ needs.test-sanity-stg.result == 'success' }}
+    
+    steps:
+    - name: Run regression tests
+      run: |
+        echo "here will come the regression tests"
+        sleep 1
+        echo "STG regression tests completed"
+
+  test-performance-stg:
+    name: Run STG performance Tests
+    runs-on: ubuntu-latest
+    needs: test-sanity-stg
+    if: ${{ needs.test-sanity-stg.result == 'success' }}
+    
+    steps:
+    - name: Run performance tests
+      run: |
+        echo "here will come the performance tests"
+        sleep 1
+        echo "STG performance tests completed"
   
   rollback-stg:
     name: Rollback STG
     runs-on: ubuntu-latest
-    needs: test-sanity-stg
-    if: ${{ needs.test-sanity-stg.result == 'failure' }}
+    needs:
+      - test-e2e-stg
+      - test-regression-stg
+      - test-performance-stg
+    if: |
+      ${{ needs.test-e2e-stg.result == 'failure' || needs.test-regression-stg.result == 'failure' || needs.test-performance-stg.result == 'failure' }}
 
     steps:
     - uses: actions/checkout@v4
@@ -222,42 +265,31 @@ jobs:
         git fetch --tags
         echo "Rolling back to stg-stable"
         git checkout stg-stable
-        # deploy to STG
+        # deploy lateset stable back to STG
 
   tag-stg:
-    name: 🏷️ Update STG Stable Tag
+    name: Update STG Stable Tag
     runs-on: ubuntu-latest
-    needs: test-sanity-stg
-    if: ${{ needs.test-sanity-stg.result == 'success' }}
+    needs:
+      - test-e2e-stg
+      - test-regression-stg
+      - test-performance-stg
+    if: |
+      ${{ needs.test-e2e-stg.result == 'success' && needs.test-regression-stg.result == 'success' && needs.test-performance-stg.result == 'success' }}
 
     steps:
     - uses: actions/checkout@v4
       with:
-        fetch-depth: 0  # Ensure access to full history and tags
-        persist-credentials: false
+        fetch-depth: 0
   
-    - name: Generate and push stable tag
-      env:
-        GIT_PAT: ${{ secrets.PAT_PUSH_TAG }}
+    - name: Move floating tag to latest verified STG release
       run: |
-        # Get the commit SHA of HEAD (from PR)
         SHORT_SHA=$(git rev-parse --short HEAD)
         DATE=$(date +'%d%m%Y')
         VERSION_TAG="stg-${DATE}-${SHORT_SHA}"
   
-        echo "Creating version tag: $VERSION_TAG"
-        
-        # Set Git credentials using PAT
-        git config --global user.name "CI Bot"
+        echo "Moving stg-stable → $VERSION_TAG"
         git config --global user.email "ci-bot@github.com"
-        git remote set-url origin https://x-access-token:${GIT_PAT}@github.com/${{ github.repository }}
-  
-        # Create immutable version tag
-        git tag $VERSION_TAG
-        git push origin $VERSION_TAG
-  
-        # Move floating stable tag to point to version tag
+        git config --global user.name "CI Bot"
         git tag -f stg-stable $VERSION_TAG
         git push origin -f stg-stable
-  
-        echo "Moved stg-stable → $VERSION_TAG"
