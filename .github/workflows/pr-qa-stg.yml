@@ -51,7 +51,7 @@ jobs:
           # deployment to EKS or other...
 
   test-sanity-qa:
-    name: Test QA sanity
+    name: Run QA sanity tests
     runs-on: ubuntu-latest
     needs: deploy-qa
     if: ${{ needs.deploy-qa.result == 'success' }}
@@ -79,7 +79,7 @@ jobs:
       run: pkill -f "node server.js" || true
 
   test-functional-qa:
-    name: Functional Tests QA
+    name: Run QA Functional tests
     runs-on: ubuntu-latest
     needs: test-sanity-qa
     if: ${{ needs.test-sanity-qa.result == 'success' }}
@@ -100,7 +100,7 @@ jobs:
         npm run test:functional || echo "Functional tests failed"
 
   test-integration-qa:
-    name: Run QA integration Tests 
+    name: Run QA integration tests 
     runs-on: ubuntu-latest
     needs: test-sanity-qa
     if: ${{ needs.test-sanity-qa.result == 'success' }}
@@ -200,7 +200,7 @@ jobs:
           # deployment to EKS or other...
       
   test-sanity-stg:
-    name: Test STG
+    name: Run STG sanity tests
     runs-on: ubuntu-latest
     needs: deploy-stg
     if: ${{ needs.deploy-stg.result == 'success' }}
@@ -307,9 +307,78 @@ jobs:
         SHORT_SHA=$(git rev-parse --short HEAD)
         DATE=$(date +'%d%m%Y')
         VERSION_TAG="stg-${DATE}-${SHORT_SHA}"
+
+  slack-alert:
+    name: Alert to Slack on Failure
+    runs-on: ubuntu-latest
+    needs:
+      - build-qa
+      - deploy-qa
+      - test-sanity-qa
+      - test-functional-qa
+      - test-integration-qa
+      - rollback-qa
+      - tag-qa
+      - build-stg
+      - deploy-stg
+      - test-sanity-stg
+      - test-e2e-stg
+      - test-regression-stg
+      - test-performance-stg
+      - rollback-stg
+      - tag-stg
+    if: always()
+
+    steps:
+    - name: Detect failed jobs
+      id: detect
+      run: |
+        FAILED=""
+        for job in build-stg deploy-stg test-sanity-stg test-e2e-stg test-regression-stg test-performance-stg rollback-stg tag-stg; do
+          result="${{ needs.${job}.result }}"
+          if [ "$result" = "failure" ]; then
+            FAILED="$FAILED\n• $job"
+          fi
+        done
   
-        echo "Moving stg-stable → $VERSION_TAG"
-        git config --global user.email "ci-bot@github.com"
-        git config --global user.name "CI Bot"
-        git tag -f stg-stable $VERSION_TAG
-        git push origin -f stg-stable
+        # If any failed, output status=failure and the list
+        if [ -n "$FAILED" ]; then
+          echo "status=failure" >> $GITHUB_OUTPUT
+          echo "failed_jobs=$FAILED" >> $GITHUB_OUTPUT
+        else
+          echo "status=success" >> $GITHUB_OUTPUT
+        fi
+  
+    - name: Notify Slack - Only on Failure
+      if: ${{ steps.detect.outputs.status == 'failure' }}
+      uses: slackapi/slack-github-action@v2.1.0
+      with:
+        payload: |
+          {
+            "text": "* PR QA/STG Pipeline Failed!*",
+            "attachments": [
+              {
+                "color": "danger",
+                "fields": [
+                  {
+                    "title": "Failed Jobs",
+                    "value": "${{ steps.detect.outputs.failed_jobs }}"
+                  },
+                  {
+                    "title": "Link to Run",
+                    "value": "<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Click here>"
+                  }
+                ],
+                "footer": "GitHub Actions • STG Workflow",
+                "ts": $(date +%s)
+              }
+            ]
+          }
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+  
+          echo "Moving stg-stable → $VERSION_TAG"
+          git config --global user.email "ci-bot@github.com"
+          git config --global user.name "CI Bot"
+          git tag -f stg-stable $VERSION_TAG
+          git push origin -f stg-stable
