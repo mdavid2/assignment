@@ -157,8 +157,8 @@ jobs:
   build-stg:
     name: Build STG
     runs-on: ubuntu-latest
-    needs: test-functional-qa
-    if: ${{ needs.test-functional-qa.result == 'success' }}
+    needs: tag-qa
+    if: ${{ needs.tag-qa.result == 'success' }}
 
     steps:
     - uses: actions/checkout@v4
