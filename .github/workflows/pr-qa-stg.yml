@@ -46,7 +46,9 @@ jobs:
         git push origin $VERSION_TAG
     
     - name: Deploy QA
-      run: echo "Deploying to QA environment..." # here will come deployment script such as pushing to remote repository (like nexus/ECR) etc.
+      run: echo "Deploying to QA environment..."
+          # push of image to remore repostiory like ECR/Nexus etc.
+          # deployment to EKS or other...
 
   test-sanity-qa:
     name: Test QA sanity
@@ -193,7 +195,9 @@ jobs:
         git push origin $VERSION_TAG
     
     - name: Deploy STG
-      run: echo "Deploying to STG environment..." # here will come deployment script such as pushing to remote repository (like nexus/ECR) etc.
+      run: echo "Deploying to STG environment..." 
+          # push of image to remore repostiory like ECR/Nexus etc.
+          # deployment to EKS or other...
       
   test-sanity-stg:
     name: Test STG
