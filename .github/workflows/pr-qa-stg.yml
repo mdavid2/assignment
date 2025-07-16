@@ -98,6 +98,9 @@ jobs:
     - name: Run functional test suite
       run: |
         npm run test:functional || { echo "❌ Functional tests failed"; exit 1; }
+      env:
+        JEST_JUNIT_OUTPUT_NAME: junit-functional.xml
+        JEST_JUNIT_OUTPUT_DIR: test-results
 
     - name: Upload Functional Test Results
       if: always()
