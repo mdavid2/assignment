@@ -54,3 +54,4 @@ If I had more time:
 1. I would use Semantic Versioning (SemVer).
 2. try to complete the 2nd approch for prod relase with the stg-stable tag trigger.
 3. fix the linter/security tests. they are currently failing and it would take me time to try to fix it as I am not familiar with node.js (I have marked them as optional and are not required to pass in order to push to prod).
+4. modify the workflow pr-qa-stg.yml, maybe break it to seperate files as it is very long, use blocks to enable re-use.
