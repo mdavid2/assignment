@@ -1,8 +1,7 @@
 const request = require('supertest');
 const express = require('express');
 
-// Import your app
-const app = require('../test-server'); // We'll create this next
+const app = require('../../test-server');
 
 describe('GET /status', () => {
   it('should return status ok with timestamp', async () => {
