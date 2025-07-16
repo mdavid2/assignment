@@ -119,55 +119,29 @@ jobs:
         git tag -f prod-stable ${{ env.VERSION_TAG }}
         git push origin -f prod-stable
 
-  slack-notify-prod:
-    name: Notify Slack PROD
+  slack-notify:
+    name: send Slack message
+    needs: tag-prod
     runs-on: ubuntu-latest
-    needs:
-      - build-prod
-      - deploy-prod
-      - test-sanity-prod
-      - rollback-prod
-      - tag-prod
     if: always()
-
     steps:
-      - name: Check pipeline status
-        id: check
+      - name: Get job status
+        id: status
         run: |
-          if [ "${{ needs.build-prod.result }}" = "failure" ] || \
-             [ "${{ needs.deploy-prod.result }}" = "failure" ] || \
-             [ "${{ needs.test-sanity-prod.result }}" = "failure" ] || \
-             [ "${{ needs.rollback-prod.result }}" = "failure" ] || \
-             [ "${{ needs.tag-prod.result }}" = "failure" ]; then
-            echo "status=failure" >> $GITHUB_OUTPUT
+          if [[ "${{ needs.deploy.result }}" == "success" ]]; then
+            echo "STATUS=✅ Deployment succeeded" >> $GITHUB_OUTPUT
+          elif [[ "${{ needs.deploy.result }}" == "failure" ]]; then
+            echo "STATUS=❌ Deployment failed" >> $GITHUB_OUTPUT
           else
-            echo "status=success" >> $GITHUB_OUTPUT
+            echo "STATUS=⚠️ Deployment status unknown" >> $GITHUB_OUTPUT
           fi
-  
+
       - name: Send Slack message
-        if: ${{ steps.check.outputs.status == 'failure' || steps.check.outputs.status == 'success' }}
-        uses: slackapi/slack-github-action@v2.1.0
+        uses: slackapi/slack-github-action@v1.24.0
         with:
-          webhook-type: "INCOMING_WEBHOOK"
-          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
           payload: |
             {
-              "text": "${{ steps.check.outputs.status == 'success' && '*✅ PROD Pipeline Succeeded!*' || '*❌ PROD Pipeline Failed!*' }}",
-              "attachments": [
-                {
-                  "color": "${{ steps.check.outputs.status == 'success' && 'good' || 'danger' }}",
-                  "fields": [
-                    {
-                      "title": "Status",
-                      "value": "${{ steps.check.outputs.status }}"
-                    },
-                    {
-                      "title": "Workflow Run",
-                      "value": "<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View on GitHub>"
-                    }
-                  ],
-                  "footer": "${{ github.repository }} • PROD Workflow",
-                  "ts": $(date +%s)
-                }
-              ]
+              "text": "${{ steps.status.outputs.STATUS }} for *${{ github.workflow }}* on *${{ github.ref_name }}*.\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View run>"
             }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
