@@ -97,7 +97,23 @@ jobs:
 
     - name: Run functional test suite
       run: |
-        npm run test:functional || echo "Functional tests failed"
+        npm run test:functional || { echo "❌ Functional tests failed"; exit 1; }
+
+    - name: Upload Functional Test Results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: functional-test-results
+        path: test-results/junit-functional.xml
+
+    - name: Publish Functional Test Results
+      if: always()
+      uses: EnricoMi/publish-unit-test-result-action@v2
+      with:
+        files: test-results/junit-functional.xml
+        check_name: "Functional Test Results"
+      env:
+        GITHUB_TOKEN: ${{ secrets.PAT_PUSH_TAG }}
 
   test-integration-qa:
     name: Run QA integration tests 
