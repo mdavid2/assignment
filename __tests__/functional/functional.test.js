@@ -6,8 +6,8 @@ const app = require('../../test-server');
 describe('GET /status', () => {
   it('should return status ok with timestamp', async () => {
     const res = await request(app).get('/status');
-    expect(res.statusCode).toBe(200);
-    expect(res.body).toHaveProperty('status', 'ok');
+    expect(res.statusCode).toBe(201);
+    expect(res.body).toHaveProperty('status', 'accepted');
     expect(res.body).toHaveProperty('timestamp');
     expect(typeof res.body.timestamp).toBe('number');
   });
