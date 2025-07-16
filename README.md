@@ -38,7 +38,7 @@ My CI/CD approch:
 Extra notes:
 while working I also tried to implement a second approach (prod-release.yml):
 1. after PR pipeline of QA + STG finished, the 'stg-stable' tag update will trigger a prod-release pipeline:
-  - create a 'realse' branch for prod
+  - create a 'release' branch for prod
   - deploy it to prod
   - run tests
   - if tests fail - rollback prod env
