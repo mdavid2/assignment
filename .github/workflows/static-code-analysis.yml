@@ -59,13 +59,10 @@ jobs:
       with:
         name: unit-test-results
         path: test-results/junit.xml
-    - name: Publish Test Results to GitHub UI
-      uses: EnricoMi/publish-unit-test-result-action@v2
-      if: always()
+    - name: Upload test results to GitHub (for UI)
+      uses: actions/upload-test-results@v1
       with:
         files: test-results/junit.xml
-      env:
-        GITHUB_TOKEN: ${{ secrets.PAT_PUSH_TAG }}
 
   snyk-security:
     name: Snyk Security Scan
