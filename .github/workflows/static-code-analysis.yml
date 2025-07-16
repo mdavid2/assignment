@@ -46,6 +46,8 @@ jobs:
     permissions:
       checks: write
       contents: read
+      issues: write
+      pull-requests: write
     
     steps:
     - uses: actions/checkout@v4
@@ -67,8 +69,6 @@ jobs:
       if: always()
       with:
         files: test-results/junit.xml
-      env:
-        GITHUB_TOKEN: ${{ secrets.PAT_PUSH_TAG }}
 
 
   snyk-security:

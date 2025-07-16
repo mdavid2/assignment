@@ -149,6 +149,7 @@ jobs:
         uses: slackapi/slack-github-action@v2.1.0
         with:
           webhook-type: "INCOMING_WEBHOOK"
+          webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
           payload: |
             {
               "text": "${{ steps.check.outputs.status == 'success' && '*✅ PROD Pipeline Succeeded!*' || '*❌ PROD Pipeline Failed!*' }}",
@@ -170,5 +171,4 @@ jobs:
                 }
               ]
             }
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
