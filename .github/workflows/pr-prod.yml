@@ -85,13 +85,6 @@ jobs:
     - uses: actions/checkout@v4
       with:
         fetch-depth: 0
-  
-    # - name: Checkout stable prod commit
-    #   run: |
-    #     git fetch --tags
-    #     echo "Rolling back to prod-stable"
-    #     git checkout prod-stable
-    #     # deploy to PROD
 
     - name: Checkout last stable PROD release
       run: |
@@ -137,11 +130,15 @@ jobs:
           fi
 
       - name: Send Slack message
-        uses: slackapi/slack-github-action@v1.24.0
-        with:
-          payload: |
-            {
-              "text": "${{ steps.status.outputs.STATUS }} for *${{ github.workflow }}* on *${{ github.ref_name }}*.\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View run>"
-            }
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: echo "sending slack message"
+
+      # this fails because I dont really have SLACK_WEBHOOK_URL
+      # - name: Send Slack message
+      #   uses: slackapi/slack-github-action@v1.24.0
+      #   with:
+      #     payload: |
+      #       {
+      #         "text": "${{ steps.status.outputs.STATUS }} for *${{ github.workflow }}* on *${{ github.ref_name }}*.\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View run>"
+      #       }
+      #   env:
+      #     SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
