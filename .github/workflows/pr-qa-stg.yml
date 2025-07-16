@@ -97,7 +97,7 @@ jobs:
 
     - name: Run functional test suite
       run: |
-        npm run test:functional || echo "Functional tests failed"
+        npm run test:functional || { echo "❌ Functional tests failed"; exit 1; }
 
   test-integration-qa:
     name: Run QA integration tests 
