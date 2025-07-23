@@ -48,7 +48,7 @@ while working I also tried to implement a second approach (prod-release.yml):
 4. in any way, I run into issues with the commits and tags, and it started to take too much time debugging, so I remained with the first approach.
 5. I also added another endpoint - '/status' + functional tests for it, to simulate the functional tests job
 
----
+-------
 
 If I had more time:
 1. I would use Semantic Versioning (SemVer).
